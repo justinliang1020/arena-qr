@@ -4,10 +4,25 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite App</title>
+    <title>Arena QR Generator</title>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <div>
+        <h1>Arena QR Generator</h1>
+        <div>
+          <p>Enter an Are.na block URL:</p>
+          <input id="arena-url" type="text" placeholder="https://www.are.na/block/..." />
+          <button id="generate-btn">Generate QR Image</button>
+        </div>
+        <div id="loading" class="loading" style="display: none;">Processing...</div>
+        <div id="error" class="error" style="display: none;"></div>
+        <div id="result" class="result-container" style="display: none;">
+          <img id="result-image" class="result-image" />
+          <button id="download-btn">Download Image</button>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
