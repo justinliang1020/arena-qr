@@ -49,7 +49,7 @@ export function setupArenaProcessor() {
       const blockData = await getArenaBlockData(url);
 
       // Generate image with QR code
-      const imageDataURL = await processArenaBlock(blockData);
+      const imageDataURL = await createArenaqrImageDataURL(blockData, url);
 
       // Show result
       if (resultImage instanceof HTMLImageElement) {
@@ -167,18 +167,13 @@ async function getArenaBlockData(url) {
 /**
  * Processes an Arena block to extract content and generate a QR code.
  * @param {ArenaBlock} blockData - The Arena block data from the API.
+ * @param {string} qrData - The data to embed in the QR code
  * @returns {Promise<string>} Data URL of the generated content with QR code.
  * @throws {Error} If processing fails or no valid content is found in the block.
  */
-async function processArenaBlock(blockData) {
+async function createArenaqrImageDataURL(blockData, qrData) {
   try {
     // Get QR code data (URL or title from the block)
-    const qrData =
-      blockData.source?.url ||
-      blockData.source_url ||
-      blockData.generated_title ||
-      blockData.title ||
-      window.location.href;
 
     // Determine block type and prepare content
     const blockClass = blockData.class || "";
@@ -224,31 +219,8 @@ async function processArenaBlock(blockData) {
       content.title = blockData.generated_title;
     }
 
-    /** @type {ContentOptions} */
-    const options = {
-      canvasWidth: 800,
-      canvasHeight: 500,
-      contentWidth: 600, // 75% of the canvas width
-      metadataWidth: 200, // 25% of the canvas width
-      frameWidth: 1,
-      frameColor: "#e7e7e5", // Arena's light gray color
-      borderColor: "#000",
-      padding: 16,
-      titleFontSize: 16,
-      titleFontFamily: "Arial, sans-serif",
-      titleColor: "#333",
-      qrCodeMargin: 1,
-      qrCodeColor: {
-        dark: "#000000",
-        light: "#ffffff",
-      },
-      qrCodeSize: 150, // Fixed QR code size
-      spaceBetween: 20,
-      backgroundColor: "#fff",
-    };
-
     // Generate combined content with QR code
-    return await generateContentWithQR(content, qrData, options);
+    return await generateContentWithQR(content, qrData);
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to process Are.na block: ${error.message}`);
