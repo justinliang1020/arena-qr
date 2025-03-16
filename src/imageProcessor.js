@@ -45,11 +45,33 @@ import QRCode from "qrcode";
  * Generates content with a QR code in a fixed-size layout.
  * @param {Content} content - The content to render (image or text)
  * @param {string} qrData - The data to encode in the QR code
- * @param {ContentOptions} settings - Styling and layout options
  * @returns {Promise<string>} Data URL of the combined content with QR code
  * @throws {Error} If content loading or QR code generation fails
  */
-export async function generateContentWithQR(content, qrData, settings) {
+export async function generateContentWithQR(content, qrData) {
+  /** @type {ContentOptions} */
+  const settings = {
+    canvasWidth: 800,
+    canvasHeight: 500,
+    contentWidth: 600, // 75% of the canvas width
+    metadataWidth: 200, // 25% of the canvas width
+    frameWidth: 1,
+    frameColor: "#e7e7e5", // Arena's light gray color
+    borderColor: "#000",
+    padding: 16,
+    titleFontSize: 16,
+    titleFontFamily: "Arial, sans-serif",
+    titleColor: "#333",
+    qrCodeMargin: 1,
+    qrCodeColor: {
+      dark: "#000000",
+      light: "#ffffff",
+    },
+    qrCodeSize: 150, // Fixed QR code size
+    spaceBetween: 20,
+    backgroundColor: "#fff",
+  };
+
   try {
     // Create canvas with fixed dimensions
     const canvas = document.createElement("canvas");
@@ -67,12 +89,15 @@ export async function generateContentWithQR(content, qrData, settings) {
 
     // Process based on content type
     if (content.type === "text" && "text" in content) {
-      await renderTextContent(content, qrData, canvas, ctx, settings);
+      await renderTextContent(content, ctx, settings);
     } else if (content.type === "image" && "imageUrl" in content) {
-      await renderImageContent(content, qrData, canvas, ctx, settings);
+      await renderImageContent(content, ctx, settings);
     } else {
       throw new Error("Invalid content provided");
     }
+
+    // Add the metadata (title and QR code)
+    await addMetadata(content, qrData, ctx, settings);
 
     // Return the final canvas as a data URL
     return canvas.toDataURL("image/jpeg", 0.9);
@@ -129,13 +154,11 @@ function drawBaseLayout(canvas, ctx, settings) {
 /**
  * Renders image content within the layout
  * @param {ImageContent} content - The content object
- * @param {string} qrData - QR code data
- * @param {HTMLCanvasElement} canvas - The canvas element
  * @param {CanvasRenderingContext2D} ctx - The canvas context
  * @param {ContentOptions} settings - The render settings
  * @returns {Promise<void>}
  */
-async function renderImageContent(content, qrData, canvas, ctx, settings) {
+async function renderImageContent(content, ctx, settings) {
   // Load the image
   const img = new Image();
   img.crossOrigin = "Anonymous";
@@ -172,9 +195,6 @@ async function renderImageContent(content, qrData, canvas, ctx, settings) {
         // Draw the image
         ctx.drawImage(img, imageX, imageY, scaledWidth, scaledHeight);
 
-        // Add the metadata (title and QR code)
-        await addMetadata(content, qrData, ctx, settings);
-
         resolve();
       } catch (err) {
         reject(err);
@@ -193,13 +213,11 @@ async function renderImageContent(content, qrData, canvas, ctx, settings) {
 /**
  * Renders text content within the layout
  * @param {TextContent} content - The content object
- * @param {string} qrData - QR code data
- * @param {HTMLCanvasElement} canvas - The canvas element
  * @param {CanvasRenderingContext2D} ctx - The canvas context
  * @param {ContentOptions} settings - The render settings
  * @returns {Promise<void>}
  */
-async function renderTextContent(content, qrData, canvas, ctx, settings) {
+async function renderTextContent(content, ctx, settings) {
   try {
     // Text rendering settings
     const textFontSize = 16;
@@ -244,9 +262,6 @@ async function renderTextContent(content, qrData, canvas, ctx, settings) {
         ctx.fillText(line, textX, textY + index * lineHeight);
       }
     });
-
-    // Add the metadata (title and QR code)
-    await addMetadata(content, qrData, ctx, settings);
 
     return Promise.resolve();
   } catch (error) {
