@@ -11,8 +11,13 @@ import QRCode from "qrcode";
  * @property {string} borderColor="#000" - Color of the border
  * @property {number} padding=20 - Padding around content in pixels
  * @property {number} titleFontSize=18 - Font size for the title
+ * @property {number} descriptionFontSize=14 - Font size for the description
+ * @property {number} dateAddedFontSize=12 - Font size for the date added
+ * @property {number} authorFontSize=12 - Font size for the author
  * @property {string} titleFontFamily=["Arial, sans-serif"] - Font family for the title
+ * @property {string} metadataFontFamily=["Arial, sans-serif"] - Font family for other metadata
  * @property {string} titleColor="#333" - Color for the title text
+ * @property {string} metadataColor="#666" - Color for other metadata text
  * @property {number} qrCodeSize=150 - QR code size
  * @property {number} qrCodeMargin=1 - QR code margin/padding
  * @property {Object} qrCodeColor - QR code colors
@@ -28,6 +33,8 @@ import QRCode from "qrcode";
  * @property {string} imageUrl - The URL of the image to load
  * @property {string} [displayUrl] - The display URL version of the image (if available)
  * @property {string} [title] - Title to display in the metadata section
+ * @property {string} [description] - Description to display in the metadata section
+ * @property {string} [created_at] - Date the content was added
  * @property {string} [username] - Username to display in the metadata section
  */
 
@@ -36,6 +43,8 @@ import QRCode from "qrcode";
  * @property {string} type - Content type (set to "text")
  * @property {string} text - The text content
  * @property {string} [title] - Title to display in the metadata section
+ * @property {string} [description] - Description to display in the metadata section
+ * @property {string} [created_at] - Date the content was added
  * @property {string} [username] - Username to display in the metadata section
  */
 
@@ -61,16 +70,21 @@ export async function generateContentWithQR(content, qrData) {
     frameColor: "#e7e7e5", // Arena's light gray color
     borderColor: "#000",
     padding: 16,
-    titleFontSize: 16,
+    titleFontSize: 18,
+    descriptionFontSize: 14,
+    dateAddedFontSize: 12,
+    authorFontSize: 12,
     titleFontFamily: "Arial, sans-serif",
+    metadataFontFamily: "Arial, sans-serif",
     titleColor: "#333",
+    metadataColor: "#666",
     qrCodeMargin: 1,
     qrCodeColor: {
       dark: "#000000",
       light: "#ffffff",
     },
     qrCodeSize: 150, // Fixed QR code size
-    spaceBetween: 20,
+    spaceBetween: 15,
     backgroundColor: "#fff",
   };
 
@@ -279,7 +293,7 @@ async function renderTextContent(content, ctx, settings) {
 }
 
 /**
- * Adds metadata (title and QR code) to the canvas
+ * Adds metadata (title, description, date added, author, and QR code) to the canvas
  * @param {Content} content - The content object
  * @param {string} qrData - The data to encode in the QR code
  * @param {CanvasRenderingContext2D} ctx - The canvas context
@@ -291,35 +305,90 @@ async function addMetadata(content, qrData, ctx, settings) {
   const metadataX = settings.contentWidth + settings.frameWidth * 3;
   const metadataY = settings.frameWidth * 2 + settings.padding;
 
-  const image = new Image(); // Using optional size for image
+  // Load and draw the Arena logo
+  const image = new Image();
   image.src = "./public/arena.png";
   await image.decode();
   const imageHeight = 17; // hardcoded
-
   ctx.drawImage(image, metadataX + settings.padding, metadataY);
-
-  // Add title if present
+  
+  // Track current Y position for progressive layout
+  let currentY = metadataY + imageHeight + settings.padding;
+  const maxWidth = settings.metadataWidth - settings.padding * 2;
+  
+  // 1. Title (if present)
   if (content.title) {
-    // Set font and style - using string literals to ensure valid string values
-    ctx.font = `${settings.titleFontSize}px ${settings.titleFontFamily}`;
+    ctx.font = `bold ${settings.titleFontSize}px ${settings.titleFontFamily}`;
     ctx.fillStyle = settings.titleColor;
     ctx.textBaseline = "top";
 
-    // Wrap title if necessary
-    const maxWidth = settings.metadataWidth - settings.padding * 2;
     const wrappedTitle = wrapText(content.title, ctx, maxWidth);
-
-    // Draw each line of the wrapped title
     wrappedTitle.forEach((line, index) => {
       ctx.fillText(
         line,
         metadataX + settings.padding,
-        metadataY +
-          index * (settings.titleFontSize * 1.2) +
-          imageHeight +
-          settings.padding,
+        currentY + index * (settings.titleFontSize * 1.2)
       );
     });
+    
+    // Update current Y position after title
+    currentY += wrappedTitle.length * (settings.titleFontSize * 1.2) + settings.spaceBetween;
+  }
+  
+  // 2. Description (if present)
+  if (content.description) {
+    ctx.font = `${settings.descriptionFontSize}px ${settings.metadataFontFamily}`;
+    ctx.fillStyle = settings.metadataColor;
+
+    const wrappedDesc = wrapText(content.description, ctx, maxWidth);
+    wrappedDesc.forEach((line, index) => {
+      ctx.fillText(
+        line,
+        metadataX + settings.padding,
+        currentY + index * (settings.descriptionFontSize * 1.2)
+      );
+    });
+    
+    // Update current Y position after description
+    currentY += wrappedDesc.length * (settings.descriptionFontSize * 1.2) + settings.spaceBetween;
+  }
+  
+  // 3. Date Added (if present)
+  if (content.created_at) {
+    ctx.font = `${settings.dateAddedFontSize}px ${settings.metadataFontFamily}`;
+    ctx.fillStyle = settings.metadataColor;
+    
+    // Format date if it's an ISO date string
+    let dateText = content.created_at;
+    try {
+      const date = new Date(content.created_at);
+      if (!isNaN(date.getTime())) {
+        dateText = date.toLocaleDateString();
+      }
+    } catch (e) {
+      // If date parsing fails, use the original string
+    }
+    
+    ctx.fillText(
+      `Added: ${dateText}`,
+      metadataX + settings.padding,
+      currentY
+    );
+    
+    // Update current Y position after date
+    currentY += settings.dateAddedFontSize * 1.2 + settings.spaceBetween;
+  }
+  
+  // 4. Author/Username (if present)
+  if (content.username) {
+    ctx.font = `${settings.authorFontSize}px ${settings.metadataFontFamily}`;
+    ctx.fillStyle = settings.metadataColor;
+    
+    ctx.fillText(
+      `By: ${content.username}`,
+      metadataX + settings.padding,
+      currentY
+    );
   }
 
   // Generate QR code

@@ -126,6 +126,8 @@ export function setupArenaProcessor() {
  * @property {User} [user]
  * @property {string} [content]
  * @property {string} [class]
+ * @property {string} [description]
+ * @property {string} [created_at]
  */
 
 /**
@@ -227,6 +229,17 @@ async function createArenaqrImageDataURL(blockData, qrData) {
       content.title = blockData.generated_title;
     }
 
+    // Set description if available
+    if (blockData.description) {
+      content.description = blockData.description;
+    }
+
+    // Set creation date if available
+    if (blockData.created_at) {
+      content.created_at = blockData.created_at;
+    }
+
+    // Set username if available
     if (blockData.user) {
       content.username = blockData.user.username;
     }
