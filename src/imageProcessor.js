@@ -28,6 +28,7 @@ import QRCode from "qrcode";
  * @property {string} imageUrl - The URL of the image to load
  * @property {string} [displayUrl] - The display URL version of the image (if available)
  * @property {string} [title] - Title to display in the metadata section
+ * @property {string} [username] - Username to display in the metadata section
  */
 
 /**
@@ -35,6 +36,7 @@ import QRCode from "qrcode";
  * @property {string} type - Content type (set to "text")
  * @property {string} text - The text content
  * @property {string} [title] - Title to display in the metadata section
+ * @property {string} [username] - Username to display in the metadata section
  */
 
 /**
@@ -289,6 +291,13 @@ async function addMetadata(content, qrData, ctx, settings) {
   const metadataX = settings.contentWidth + settings.frameWidth * 3;
   const metadataY = settings.frameWidth * 2 + settings.padding;
 
+  const image = new Image(); // Using optional size for image
+  image.src = "./public/arena.png";
+  await image.decode();
+  const imageHeight = 17; // hardcoded
+
+  ctx.drawImage(image, metadataX + settings.padding, metadataY);
+
   // Add title if present
   if (content.title) {
     // Set font and style - using string literals to ensure valid string values
@@ -304,8 +313,11 @@ async function addMetadata(content, qrData, ctx, settings) {
     wrappedTitle.forEach((line, index) => {
       ctx.fillText(
         line,
-        metadataX,
-        metadataY + index * (settings.titleFontSize * 1.2),
+        metadataX + settings.padding,
+        metadataY +
+          index * (settings.titleFontSize * 1.2) +
+          imageHeight +
+          settings.padding,
       );
     });
   }
@@ -324,16 +336,9 @@ async function addMetadata(content, qrData, ctx, settings) {
   return new Promise((resolve, reject) => {
     qrImg.onload = () => {
       try {
-        // Calculate QR code position
-        const titleHeight = content.title
-          ? Math.ceil(
-              ctx.measureText(content.title).width /
-                (settings.metadataWidth - settings.padding * 2),
-            ) *
-            (settings.titleFontSize * 1.2)
-          : 0;
-
-        const qrY = metadataY + titleHeight + settings.spaceBetween;
+        // Position QR code near bottom
+        const qrY =
+          settings.canvasHeight - settings.qrCodeSize - settings.padding;
         const qrX =
           metadataX +
           (settings.metadataWidth -
@@ -362,7 +367,6 @@ async function addMetadata(content, qrData, ctx, settings) {
         reject(err);
       }
     };
-
     qrImg.onerror = () => {
       reject(new Error("Failed to generate QR code"));
     };

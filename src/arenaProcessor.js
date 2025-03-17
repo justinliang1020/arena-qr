@@ -48,6 +48,8 @@ export function setupArenaProcessor() {
       // Get block data from Are.na
       const blockData = await getArenaBlockData(url);
 
+      console.log(blockData);
+
       // Generate image with QR code
       const imageDataURL = await createArenaqrImageDataURL(blockData, url);
 
@@ -121,8 +123,14 @@ export function setupArenaProcessor() {
  * @property {string} [source_url]
  * @property {string} [generated_title]
  * @property {string} [title]
+ * @property {User} [user]
  * @property {string} [content]
  * @property {string} [class]
+ */
+
+/**
+ * @typedef {Object} User
+ * @property {string} username
  */
 
 /**
@@ -219,6 +227,10 @@ async function createArenaqrImageDataURL(blockData, qrData) {
       content.title = blockData.generated_title;
     }
 
+    if (blockData.user) {
+      content.username = blockData.user.username;
+    }
+
     // Generate combined content with QR code
     return await generateContentWithQR(content, qrData);
   } catch (error) {
@@ -228,4 +240,3 @@ async function createArenaqrImageDataURL(blockData, qrData) {
     throw new Error("Failed to process Are.na block: Unknown error");
   }
 }
-
