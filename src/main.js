@@ -7,13 +7,14 @@ import {
 // Get DOM elements
 const arenaUrlInput = document.getElementById("arena-url");
 const generateBtn = document.getElementById("generate-btn");
+const exampleBtn = document.getElementById("example-btn");
 const loadingEl = document.getElementById("loading");
 const errorEl = document.getElementById("error");
 const resultEl = document.getElementById("result");
 const resultImage = document.getElementById("result-image");
 const downloadBtn = document.getElementById("download-btn");
 
-if (!generateBtn) {
+if (!generateBtn || !exampleBtn) {
   throw new Error("Required DOM elements not found");
 }
 
@@ -21,6 +22,21 @@ if (!generateBtn) {
 generateBtn.addEventListener("click", async () => {
   const url =
     arenaUrlInput instanceof HTMLInputElement ? arenaUrlInput.value.trim() : "";
+  generateArenaqrImage(url);
+});
+
+exampleBtn.addEventListener("click", async () => {
+  const urls = [
+    "https://www.are.na/block/35251863",
+    "https://www.are.na/block/35284311",
+    "https://www.are.na/block/35021175",
+    "https://www.are.na/block/34879567",
+    "https://www.are.na/block/33647520",
+  ];
+  const url = urls[Math.floor(Math.random() * urls.length)];
+  if (arenaUrlInput instanceof HTMLInputElement) {
+    arenaUrlInput.value = url;
+  }
   generateArenaqrImage(url);
 });
 
