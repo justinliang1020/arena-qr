@@ -13,16 +13,7 @@ const resultEl = document.getElementById("result");
 const resultImage = document.getElementById("result-image");
 const downloadBtn = document.getElementById("download-btn");
 
-// Validate required elements exist
-if (
-  !arenaUrlInput ||
-  !generateBtn ||
-  !loadingEl ||
-  !errorEl ||
-  !resultEl ||
-  !resultImage ||
-  !downloadBtn
-) {
+if (!generateBtn) {
   throw new Error("Required DOM elements not found");
 }
 
@@ -30,12 +21,24 @@ if (
 generateBtn.addEventListener("click", async () => {
   const url =
     arenaUrlInput instanceof HTMLInputElement ? arenaUrlInput.value.trim() : "";
+  generateArenaqrImage(url);
+});
 
-  if (!url) {
-    showError("Please enter an Are.na block URL");
-    return;
+/**
+ * @param {string} url
+ */
+async function generateArenaqrImage(url) {
+  if (
+    !arenaUrlInput ||
+    !generateBtn ||
+    !loadingEl ||
+    !errorEl ||
+    !resultEl ||
+    !resultImage ||
+    !downloadBtn
+  ) {
+    throw new Error("Required DOM elements not found");
   }
-
   // Show loading, hide other elements
   loadingEl.style.display = "block";
   errorEl.style.display = "none";
@@ -70,7 +73,7 @@ generateBtn.addEventListener("click", async () => {
   } finally {
     loadingEl.style.display = "none";
   }
-});
+}
 
 // Enable Enter key on the input field
 if (arenaUrlInput instanceof HTMLInputElement) {
@@ -92,4 +95,3 @@ function showError(message) {
   errorEl.textContent = message;
   errorEl.style.display = "block";
 }
-
