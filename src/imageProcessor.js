@@ -2,32 +2,32 @@ import QRCode from "qrcode";
 
 /**
  * @typedef {Object} ContentOptions
- * @property {number} canvasWidth=800 - Fixed width of the generated canvas
- * @property {number} canvasHeight=500 - Fixed height of the generated canvas
- * @property {number} contentWidth=600 - Width of the content area (left side)
- * @property {number} metadataWidth=200 - Width of the metadata area (right side)
- * @property {number} frameWidth=1 - Width of the border frame in pixels
- * @property {string} frameColor="#e7e7e5" - Color of the frame
- * @property {string} borderColor="#000" - Color of the border
- * @property {string} containerBorderColor="#e7e7e5" - Color of the content container border
- * @property {number} containerPadding=2 - Padding inside the content container border
- * @property {number} textContainerMargin=5 - Margin inside the content container border
- * @property {number} padding=20 - Padding around content in pixels
- * @property {number} titleFontSize=18 - Font size for the title
- * @property {number} descriptionFontSize=14 - Font size for the description
- * @property {number} dateAddedFontSize=12 - Font size for the date added
- * @property {number} authorFontSize=12 - Font size for the author
- * @property {string} titleFontFamily=["Arial, sans-serif"] - Font family for the title
- * @property {string} metadataFontFamily=["Arial, sans-serif"] - Font family for other metadata
- * @property {string} titleColor="#333" - Color for the title text
- * @property {string} metadataColor="#666" - Color for other metadata text
- * @property {number} qrCodeSize=150 - QR code size
- * @property {number} qrCodeMargin=1 - QR code margin/padding
+ * @property {number} canvasWidth - Fixed width of the generated canvas
+ * @property {number} canvasHeight - Fixed height of the generated canvas
+ * @property {number} contentWidth - Width of the content area (left side)
+ * @property {number} metadataWidth - Width of the metadata area (right side)
+ * @property {number} frameWidth - Width of the border frame in pixels
+ * @property {string} frameColor - Color of the frame
+ * @property {string} borderColor - Color of the border
+ * @property {string} containerBorderColor - Color of the content container border
+ * @property {number} containerPadding - Padding inside the content container border
+ * @property {number} textContainerMargin - Margin inside the content container border
+ * @property {number} padding - Padding around content in pixels
+ * @property {number} titleFontSize - Font size for the title
+ * @property {number} descriptionFontSize - Font size for the description
+ * @property {number} dateAddedFontSize - Font size for the date added
+ * @property {number} authorFontSize - Font size for the author
+ * @property {string} titleFontFamily - Font family for the title
+ * @property {string} metadataFontFamily - Font family for other metadata
+ * @property {string} titleColor - Color for the title text
+ * @property {string} metadataColor - Color for other metadata text
+ * @property {number} qrCodeSize - QR code size
+ * @property {number} qrCodeMargin - QR code margin/padding
  * @property {Object} qrCodeColor - QR code colors
- * @property {string} qrCodeColor.dark="#000000" - QR code dark color
- * @property {string} qrCodeColor.light="#ffffff" - QR code light color
- * @property {number} spaceBetween=15 - Space between elements in pixels
- * @property {string} backgroundColor="#fff" - Background color
+ * @property {string} qrCodeColor.dark - QR code dark color
+ * @property {string} qrCodeColor.light - QR code light color
+ * @property {number} spaceBetween - Space between elements in pixels
+ * @property {string} backgroundColor - Background color
  */
 
 /**
