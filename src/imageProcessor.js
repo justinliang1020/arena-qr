@@ -9,6 +9,8 @@ import QRCode from "qrcode";
  * @property {number} frameWidth=1 - Width of the border frame in pixels
  * @property {string} frameColor="#e7e7e5" - Color of the frame
  * @property {string} borderColor="#000" - Color of the border
+ * @property {string} containerBorderColor="#e7e7e5" - Color of the content container border
+ * @property {number} containerPadding=2 - Padding inside the content container border
  * @property {number} padding=20 - Padding around content in pixels
  * @property {number} titleFontSize=18 - Font size for the title
  * @property {number} descriptionFontSize=14 - Font size for the description
@@ -69,6 +71,8 @@ export async function generateContentWithQR(content, qrData) {
     frameWidth: 1,
     frameColor: "#e7e7e5", // Arena's light gray color
     borderColor: "#000",
+    containerBorderColor: "#e7e7e5", // Light gray for content container border
+    containerPadding: 2, // Padding inside the container border
     padding: 16,
     titleFontSize: 18,
     descriptionFontSize: 14,
@@ -189,24 +193,46 @@ async function renderImageContent(content, ctx, settings) {
           settings.padding * 2 -
           settings.frameWidth * 4;
 
-        // Scale the image to fit in the content area while maintaining aspect ratio
+        // Draw content container with grey border
+        const containerX = settings.frameWidth * 2 + settings.padding;
+        const containerY = settings.frameWidth * 2 + settings.padding;
+        const containerWidth = contentAreaWidth;
+        const containerHeight = contentAreaHeight;
+
+        // Draw grey border rectangle
+        ctx.fillStyle = settings.containerBorderColor;
+        ctx.fillRect(containerX, containerY, containerWidth, containerHeight);
+
+        // Draw white inner rectangle (slightly smaller)
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(
+          containerX + settings.containerPadding,
+          containerY + settings.containerPadding,
+          containerWidth - settings.containerPadding * 2,
+          containerHeight - settings.containerPadding * 2,
+        );
+
+        // Scale the image to fit inside the inner white rectangle while maintaining aspect ratio
+        const innerWidth = containerWidth - settings.containerPadding * 2;
+        const innerHeight = containerHeight - settings.containerPadding * 2;
+
         const scale = Math.min(
-          contentAreaWidth / img.width,
-          contentAreaHeight / img.height,
+          innerWidth / img.width,
+          innerHeight / img.height,
         );
 
         const scaledWidth = img.width * scale;
         const scaledHeight = img.height * scale;
 
-        // Center the image in the content area
+        // Center the image in the inner area
         const imageX =
-          settings.frameWidth * 2 +
-          settings.padding +
-          (contentAreaWidth - scaledWidth) / 2;
+          containerX +
+          settings.containerPadding +
+          (innerWidth - scaledWidth) / 2;
         const imageY =
-          settings.frameWidth * 2 +
-          settings.padding +
-          (contentAreaHeight - scaledHeight) / 2;
+          containerY +
+          settings.containerPadding +
+          (innerHeight - scaledHeight) / 2;
 
         // Draw the image
         ctx.drawImage(img, imageX, imageY, scaledWidth, scaledHeight);
@@ -245,13 +271,23 @@ async function renderTextContent(content, ctx, settings) {
     const contentAreaHeight =
       settings.canvasHeight - settings.padding * 2 - settings.frameWidth * 4;
 
-    // Prepare text background
-    ctx.fillStyle = "#fff";
+    // Draw content container with grey border
+    const containerX = settings.frameWidth * 2 + settings.padding;
+    const containerY = settings.frameWidth * 2 + settings.padding;
+    const containerWidth = contentAreaWidth;
+    const containerHeight = contentAreaHeight;
+
+    // Draw grey border rectangle
+    ctx.fillStyle = settings.containerBorderColor;
+    ctx.fillRect(containerX, containerY, containerWidth, containerHeight);
+
+    // Draw white inner rectangle (slightly smaller)
+    ctx.fillStyle = "#ffffff";
     ctx.fillRect(
-      settings.frameWidth * 2 + settings.padding / 2,
-      settings.frameWidth * 2 + settings.padding / 2,
-      contentAreaWidth,
-      contentAreaHeight,
+      containerX + settings.containerPadding,
+      containerY + settings.containerPadding,
+      containerWidth - settings.containerPadding * 2,
+      containerHeight - settings.containerPadding * 2,
     );
 
     // Draw text
@@ -259,21 +295,20 @@ async function renderTextContent(content, ctx, settings) {
     ctx.font = `${textFontSize}px ${textFontFamily}`;
     ctx.textBaseline = "top";
 
-    const textX = settings.frameWidth * 2 + settings.padding;
-    const textY = settings.frameWidth * 2 + settings.padding;
+    const textX = containerX + settings.containerPadding * 2;
+    const textY = containerY + settings.containerPadding * 2;
+
+    // Available width for text is now the inner rectangle width minus some padding
+    const textWidth = containerWidth - settings.containerPadding * 4;
 
     // Calculate wrapped text lines
-    const wrappedText = wrapText(
-      content.text,
-      ctx,
-      contentAreaWidth - settings.padding,
-    );
+    const wrappedText = wrapText(content.text, ctx, textWidth);
 
     // Draw the text with line wrapping
     wrappedText.forEach((line, index) => {
       if (
         textY + (index + 1) * lineHeight <
-        settings.canvasHeight - settings.padding
+        containerY + containerHeight - settings.containerPadding * 2
       ) {
         ctx.fillText(line, textX, textY + index * lineHeight);
       }
@@ -311,11 +346,11 @@ async function addMetadata(content, qrData, ctx, settings) {
   await image.decode();
   const imageHeight = 17; // hardcoded
   ctx.drawImage(image, metadataX + settings.padding, metadataY);
-  
+
   // Track current Y position for progressive layout
   let currentY = metadataY + imageHeight + settings.padding;
   const maxWidth = settings.metadataWidth - settings.padding * 2;
-  
+
   // 1. Title (if present)
   if (content.title) {
     ctx.font = `bold ${settings.titleFontSize}px ${settings.titleFontFamily}`;
@@ -327,14 +362,16 @@ async function addMetadata(content, qrData, ctx, settings) {
       ctx.fillText(
         line,
         metadataX + settings.padding,
-        currentY + index * (settings.titleFontSize * 1.2)
+        currentY + index * (settings.titleFontSize * 1.2),
       );
     });
-    
+
     // Update current Y position after title
-    currentY += wrappedTitle.length * (settings.titleFontSize * 1.2) + settings.spaceBetween;
+    currentY +=
+      wrappedTitle.length * (settings.titleFontSize * 1.2) +
+      settings.spaceBetween;
   }
-  
+
   // 2. Description (if present)
   if (content.description) {
     ctx.font = `${settings.descriptionFontSize}px ${settings.metadataFontFamily}`;
@@ -345,19 +382,21 @@ async function addMetadata(content, qrData, ctx, settings) {
       ctx.fillText(
         line,
         metadataX + settings.padding,
-        currentY + index * (settings.descriptionFontSize * 1.2)
+        currentY + index * (settings.descriptionFontSize * 1.2),
       );
     });
-    
+
     // Update current Y position after description
-    currentY += wrappedDesc.length * (settings.descriptionFontSize * 1.2) + settings.spaceBetween;
+    currentY +=
+      wrappedDesc.length * (settings.descriptionFontSize * 1.2) +
+      settings.spaceBetween;
   }
-  
+
   // 3. Date Added (if present)
   if (content.created_at) {
     ctx.font = `${settings.dateAddedFontSize}px ${settings.metadataFontFamily}`;
     ctx.fillStyle = settings.metadataColor;
-    
+
     // Format date if it's an ISO date string
     let dateText = content.created_at;
     try {
@@ -368,26 +407,22 @@ async function addMetadata(content, qrData, ctx, settings) {
     } catch (e) {
       // If date parsing fails, use the original string
     }
-    
-    ctx.fillText(
-      `Added: ${dateText}`,
-      metadataX + settings.padding,
-      currentY
-    );
-    
+
+    ctx.fillText(`Added: ${dateText}`, metadataX + settings.padding, currentY);
+
     // Update current Y position after date
     currentY += settings.dateAddedFontSize * 1.2 + settings.spaceBetween;
   }
-  
+
   // 4. Author/Username (if present)
   if (content.username) {
     ctx.font = `${settings.authorFontSize}px ${settings.metadataFontFamily}`;
     ctx.fillStyle = settings.metadataColor;
-    
+
     ctx.fillText(
       `By: ${content.username}`,
       metadataX + settings.padding,
-      currentY
+      currentY,
     );
   }
 
