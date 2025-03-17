@@ -349,7 +349,7 @@ async function addMetadata(content, qrData, ctx, settings) {
 
   // Load and draw the Arena logo
   const image = new Image();
-  image.src = "./public/arena.png";
+  image.src = "/arena.png";
   await image.decode();
   const imageHeight = 17; // hardcoded
   ctx.drawImage(image, metadataX + settings.padding, metadataY);
