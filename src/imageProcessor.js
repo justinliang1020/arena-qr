@@ -11,7 +11,6 @@ import QRCode from "qrcode";
  * @property {string} borderColor - Color of the border
  * @property {string} containerBorderColor - Color of the content container border
  * @property {number} containerPadding - Padding inside the content container border
- * @property {number} textContainerMargin - Margin inside the content container border
  * @property {number} padding - Padding around content in pixels
  * @property {number} titleFontSize - Font size for the title
  * @property {number} descriptionFontSize - Font size for the description
@@ -74,7 +73,6 @@ export async function generateContentWithQR(content, qrData) {
     borderColor: "#000",
     containerBorderColor: "#e7e7e5", // Light gray for content container border
     containerPadding: 2, // Padding inside the container border
-    textContainerMargin: 5, // Padding inside the container border
     padding: 16,
     titleFontSize: 18,
     descriptionFontSize: 14,
@@ -174,6 +172,62 @@ function drawBaseLayout(canvas, ctx, settings) {
 }
 
 /**
+ * @typedef {Object} ContainerDimensions
+ * @property {number} x - Container x position
+ * @property {number} y - Container y position
+ * @property {number} width - Container total width
+ * @property {number} height - Container total height
+ * @property {number} innerWidth - Container inner width
+ * @property {number} innerHeight - Container inner height
+ * @property {number} innerX - Container inner x position
+ * @property {number} innerY - Container inner y position
+ */
+
+/**
+ * Draw a content container with border
+ * @param {CanvasRenderingContext2D} ctx - The canvas context
+ * @param {ContentOptions} settings - The render settings
+ * @returns {ContainerDimensions} Container dimensions and coordinates
+ */
+function drawContentContainer(ctx, settings) {
+  // Calculate the content area dimensions
+  const contentAreaWidth = settings.contentWidth - settings.padding * 2;
+  const contentAreaHeight =
+    settings.canvasHeight - settings.padding * 2 - settings.frameWidth * 4;
+
+  // Define container coordinates
+  const containerX = settings.frameWidth * 2 + settings.padding;
+  const containerY = settings.frameWidth * 2 + settings.padding;
+  const containerWidth = contentAreaWidth;
+  const containerHeight = contentAreaHeight;
+
+  // Draw grey border rectangle
+  ctx.fillStyle = settings.containerBorderColor;
+  ctx.fillRect(containerX, containerY, containerWidth, containerHeight);
+
+  // Draw white inner rectangle (slightly smaller)
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(
+    containerX + settings.containerPadding,
+    containerY + settings.containerPadding,
+    containerWidth - settings.containerPadding * 2,
+    containerHeight - settings.containerPadding * 2,
+  );
+
+  // Return container info for positioning content
+  return {
+    x: containerX,
+    y: containerY,
+    width: containerWidth,
+    height: containerHeight,
+    innerWidth: containerWidth - settings.containerPadding * 2,
+    innerHeight: containerHeight - settings.containerPadding * 2,
+    innerX: containerX + settings.containerPadding,
+    innerY: containerY + settings.containerPadding,
+  };
+}
+
+/**
  * Renders image content within the layout
  * @param {ImageContent} content - The content object
  * @param {CanvasRenderingContext2D} ctx - The canvas context
@@ -188,39 +242,13 @@ async function renderImageContent(content, ctx, settings) {
   return new Promise((resolve, reject) => {
     img.onload = async () => {
       try {
-        // Calculate the content area dimensions
-        const contentAreaWidth = settings.contentWidth - settings.padding * 2;
-        const contentAreaHeight =
-          settings.canvasHeight -
-          settings.padding * 2 -
-          settings.frameWidth * 4;
-
-        // Draw content container with grey border
-        const containerX = settings.frameWidth * 2 + settings.padding;
-        const containerY = settings.frameWidth * 2 + settings.padding;
-        const containerWidth = contentAreaWidth;
-        const containerHeight = contentAreaHeight;
-
-        // Draw grey border rectangle
-        ctx.fillStyle = settings.containerBorderColor;
-        ctx.fillRect(containerX, containerY, containerWidth, containerHeight);
-
-        // Draw white inner rectangle (slightly smaller)
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(
-          containerX + settings.containerPadding,
-          containerY + settings.containerPadding,
-          containerWidth - settings.containerPadding * 2,
-          containerHeight - settings.containerPadding * 2,
-        );
+        // Draw content container and get positioning info
+        const container = drawContentContainer(ctx, settings);
 
         // Scale the image to fit inside the inner white rectangle while maintaining aspect ratio
-        const innerWidth = containerWidth - settings.containerPadding * 2;
-        const innerHeight = containerHeight - settings.containerPadding * 2;
-
         const scale = Math.min(
-          innerWidth / img.width,
-          innerHeight / img.height,
+          container.innerWidth / img.width,
+          container.innerHeight / img.height,
         );
 
         const scaledWidth = img.width * scale;
@@ -228,13 +256,9 @@ async function renderImageContent(content, ctx, settings) {
 
         // Center the image in the inner area
         const imageX =
-          containerX +
-          settings.containerPadding +
-          (innerWidth - scaledWidth) / 2;
+          container.innerX + (container.innerWidth - scaledWidth) / 2;
         const imageY =
-          containerY +
-          settings.containerPadding +
-          (innerHeight - scaledHeight) / 2;
+          container.innerY + (container.innerHeight - scaledHeight) / 2;
 
         // Draw the image
         ctx.drawImage(img, imageX, imageY, scaledWidth, scaledHeight);
@@ -267,50 +291,22 @@ async function renderTextContent(content, ctx, settings) {
     const textFontSize = 16;
     const textFontFamily = settings.titleFontFamily;
     const lineHeight = textFontSize * 1.4;
+    const textPadding = 10; // Additional padding inside container for text
 
-    // Calculate the content area dimensions
-    const contentAreaWidth = settings.contentWidth - settings.padding * 2;
-    const contentAreaHeight =
-      settings.canvasHeight - settings.padding * 2 - settings.frameWidth * 4;
-
-    // Draw content container with grey border
-    const containerX = settings.frameWidth * 2 + settings.padding;
-    const containerY = settings.frameWidth * 2 + settings.padding;
-    const containerWidth = contentAreaWidth;
-    const containerHeight = contentAreaHeight;
-
-    // Draw grey border rectangle
-    ctx.fillStyle = settings.containerBorderColor;
-    ctx.fillRect(containerX, containerY, containerWidth, containerHeight);
-
-    // Draw white inner rectangle (slightly smaller)
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(
-      containerX + settings.containerPadding,
-      containerY + settings.containerPadding,
-      containerWidth - settings.containerPadding * 2,
-      containerHeight - settings.containerPadding * 2,
-    );
+    // Draw content container and get positioning info
+    const container = drawContentContainer(ctx, settings);
 
     // Draw text
     ctx.fillStyle = "#333";
     ctx.font = `${textFontSize}px ${textFontFamily}`;
     ctx.textBaseline = "top";
 
-    const textX =
-      containerX +
-      settings.containerPadding * 2 +
-      settings.textContainerMargin * 2;
-    const textY =
-      containerY +
-      settings.containerPadding * 2 +
-      settings.textContainerMargin * 2;
+    // Add some padding inside the container for text
+    const textX = container.innerX + textPadding;
+    const textY = container.innerY + textPadding;
 
-    // Available width for text is now the inner rectangle width minus some padding
-    const textWidth =
-      containerWidth -
-      settings.containerPadding * 4 -
-      settings.textContainerMargin * 4;
+    // Available width for text inside the container
+    const textWidth = container.innerWidth - textPadding * 2;
 
     // Calculate wrapped text lines
     const wrappedText = wrapText(content.text, ctx, textWidth);
@@ -319,7 +315,7 @@ async function renderTextContent(content, ctx, settings) {
     wrappedText.forEach((line, index) => {
       if (
         textY + (index + 1) * lineHeight <
-        containerY + containerHeight - settings.containerPadding * 2
+        container.innerY + container.innerHeight - textPadding
       ) {
         ctx.fillText(line, textX, textY + index * lineHeight);
       }
