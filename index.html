@@ -4,25 +4,39 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Arena QR Generator</title>
+    <title>arena-qr</title>
   </head>
   <body>
-    <div id="app">
+    <main>
+      <h1>Arena Block QR Generator</h1>
+      <p>
+        <i>
+          Download and print to make your Are.na block, <strong>IRL!</strong>
+        </i>
+      </p>
       <div>
-        <h1>Arena QR Generator</h1>
-        <div>
-          <p>Enter an Are.na block URL:</p>
-          <input id="arena-url" type="text" placeholder="https://www.are.na/block/..." />
-          <button id="generate-btn">Generate QR Image</button>
-        </div>
-        <div id="loading" class="loading" style="display: none;">Processing...</div>
-        <div id="error" class="error" style="display: none;"></div>
-        <div id="result" class="result-container" style="display: none;">
-          <img id="result-image" class="result-image" />
-          <button id="download-btn">Download Image</button>
-        </div>
+        <p>Enter an Are.na block URL:</p>
+        <input
+          id="arena-url"
+          type="text"
+          placeholder="https://www.are.na/block/..."
+        />
+        <button id="generate-btn">Generate QR Image</button>
       </div>
-    </div>
+      <div id="loading" class="loading" style="display: none">
+        Processing...
+      </div>
+      <div id="error" class="error" style="display: none"></div>
+      <div id="result" class="result-container" style="display: none">
+        <img id="result-image" class="result-image" />
+        <button id="download-btn">Download Image</button>
+      </div>
+    </main>
+    <footer>
+      made by justin.
+      <a href="https://github.com/justinliang1020/arena-qr">source code</a>
+    </footer>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
+
